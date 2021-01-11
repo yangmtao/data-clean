@@ -1,0 +1,19 @@
+server:
+  port: 9999
+  servlet:
+    context-path: /data
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 30MB
+  data:
+    mongodb:
+      host: 192.168.1.150
+      port: 27018
+      database: ztb_db
+      username: ymt
+      password: ymt123456
+  thymeleaf:
+    cache: false

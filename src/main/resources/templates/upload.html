@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>上传文件</title>
+</head>
+<body>
+<form method="post" enctype="multipart/form-data" action="/data/uploadFile">
+    <input type="file" name ="file">
+    <input type="submit" value="上传">
+</form>
+
+<form method="get" action="/data/filter">
+    <input type="text" name ="entName" placeholder="entName">
+    <input type="text" name ="title" placeholder="title">
+    <input type="text" name ="date" placeholder="date">
+    <input type="submit" value="查询">
+</form>
+</body>
+</html>
