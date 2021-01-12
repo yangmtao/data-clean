@@ -51,22 +51,22 @@ public class ZtbServiceImpl implements ZtbService {
     }
 
     @Override
-    public <E> R exportToExcel(List<E> ztbList, String userId,HttpServletResponse response) {
+    public <E> void exportToExcel(List<E> ztbList, String userId,HttpServletResponse response) {
         if(ztbList != null && ztbList.size() > 1){
-            return this.exportToExcelByEntName(ztbList,response,ZtbDocument.class);
+             this.exportToExcelByEntName(ztbList,response,ZtbDocument.class);
         } else {
             List<ZtbSummary> summaryList = mongoTemplate.find(new Query().addCriteria(Criteria.where("phone").is(userId)),ZtbSummary.class);
-            return this.exportToExcelByEntName(summaryList,response,ZtbSummary.class);
+             this.exportToExcelByEntName(summaryList,response,ZtbSummary.class);
 
         }
 
     }
 
-    private <E> R exportToExcelByEntName(List<E> list, HttpServletResponse response, Class tClass){
+    private <E> void exportToExcelByEntName(List<E> list, HttpServletResponse response, Class tClass){
         List<ZtbSummary> summaryList = new ArrayList<>();
         List<ZtbDocument> ztbList = new ArrayList<>();
         String[] headerItems = {};
-        String className = tClass.getName();
+        String className = tClass.getSimpleName();
         if("ZtbSummary".equals(className)){
             headerItems = Const.SUMMARYEXCELITEMS;
             Class<ZtbSummary> tSummary = ZtbSummary.class;
@@ -126,7 +126,7 @@ public class ZtbServiceImpl implements ZtbService {
         }
 
         // 将写好的excel导出到客户端
-        String entName = ztbList.get(0).getEntName();
+        String entName = ztbList.size() > 0 ? ztbList.get(0).getEntName() : "全部";
 
         ServletOutputStream out;
         try{
@@ -138,9 +138,7 @@ public class ZtbServiceImpl implements ZtbService {
             out.flush();
             out.close();
         } catch (Exception e){
-            return R.error("导出失败！");
+            System.out.println("导出失败！");
         }
-
-        return R.ok("导出成功！");
     }
 }

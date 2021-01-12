@@ -26,6 +26,7 @@ import xyz.ymtao.service.ztb.ZtbService;
 import xyz.ymtao.util.R;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -174,20 +175,19 @@ public class ZTBController {
     // 将中标信息导出为excel
     @ApiOperation(value = "中标信息导出为excel")
     @GetMapping("/export/excel")
-    public R exportToExcel(@RequestParam(name ="entName",required = false) @ApiParam(value = "企业名称，不传时为导出所有汇总信息") String entName,
+    public void exportToExcel(@RequestParam(name ="entName",required = false) @ApiParam(value = "企业名称，不传时为导出所有汇总信息") String entName,
                            @RequestParam(name ="userId",required = true) @ApiParam(value = "用户ID") String userId,
-                           HttpServletResponse response){
+                           HttpServletResponse response) throws IOException {
         Query query = new Query();
         query.addCriteria(Criteria.where("phone").is(userId));
+        List<ZtbDocument> ztbList = null;
         if(entName!=null){
             query.addCriteria(Criteria.where("entName").is(entName));
-            List<ZtbDocument> ztbList = mongoTemplate.find(query,ZtbDocument.class,COLLECTION_NAME);
-            if(ztbList != null || ztbList.size() < 1){
-                return R.error("暂无可导出的中标信息！");
+            ztbList = mongoTemplate.find(query,ZtbDocument.class,COLLECTION_NAME);
+            if(ztbList.size() < 1){
+                response.getWriter().println("暂无可导出的中标信息！");
             }
-            return ztbService.exportToExcel(ztbList,userId,response);
         }
-
-        return R.ok();
+        ztbService.exportToExcel(ztbList,userId,response);
     }
 }

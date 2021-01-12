@@ -14,5 +14,5 @@ import java.util.List;
 public interface ZtbService {
     public long updateZtb(ZtbDocument ztbDocument);
 
-    public <T> R exportToExcel(List<T> list, String userId,HttpServletResponse response);
+    public <T> void exportToExcel(List<T> list, String userId,HttpServletResponse response);
 }
