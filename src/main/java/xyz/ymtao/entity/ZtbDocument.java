@@ -21,6 +21,7 @@ public class ZtbDocument implements Serializable {
     private String date;
     private String content;
     private String keyContent;
+    private String phone;
     /** 解析状态*/
     private String status;
     /** 模板类型*/
@@ -34,6 +35,15 @@ public class ZtbDocument implements Serializable {
     private boolean summaryed = false;
     // 历史汇总金额
     private String summaryAmount;
+
+    public ZtbDocument(String entName, String title, String date, String content,String phone) {
+        this.entName = entName;
+        this.title = title;
+        this.date = date;
+        this.content = content;
+        this.id = title.hashCode();
+        this.phone = phone;
+    }
 
     public ZtbDocument(String entName, String title, String date, String content) {
         this.entName = entName;
@@ -58,6 +68,19 @@ public class ZtbDocument implements Serializable {
         if(title != null){
             this.id = title.hashCode();
         }
+    }
+    public ZtbDocument(String entName, String title, String date, String content, String keyContent, String status, String type, double accuracyRate, String amount,String phone) {
+        this.entName = entName;
+        this.title = title;
+        this.date = date;
+        this.content = content;
+        this.keyContent = keyContent;
+        this.status = status;
+        this.type = type;
+        this.accuracyRate = accuracyRate;
+        this.amount = amount;
+        this.id = title.hashCode();
+        this.phone = phone;
     }
 
     public ZtbDocument() {

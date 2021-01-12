@@ -53,11 +53,12 @@ public class ZTBController {
 
     @ApiOperation(value = "招投标信息查询")
     @GetMapping("/filter")
-    public R doFilter(@RequestParam(name = "entName",required = false) @ApiParam(value = "企业名称") String entName,
+    public R doFilter(@RequestParam(name = "phone") String phone, @RequestParam(name = "entName",required = false) @ApiParam(value = "企业名称") String entName,
                       @RequestParam(required = false) @ApiParam(value = "模板类型") String type,
                       @RequestParam(required = false)  @ApiParam(value = "中标起始日期") String startTime,
                       @RequestParam(required = false) @ApiParam(value = "中标公告标题") String title){
         Query query = new Query();
+        query.addCriteria(Criteria.where("phone").is(phone));
         if(entName != null && entName != ""){
             query.addCriteria(Criteria.where("entName").is(entName));
         }
