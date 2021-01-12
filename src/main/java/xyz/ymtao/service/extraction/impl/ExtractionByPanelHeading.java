@@ -1,7 +1,7 @@
 package xyz.ymtao.service.extraction.impl;
 
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import xyz.ymtao.entity.ZtbDocument;
 import xyz.ymtao.service.extraction.Extraction;
 
 import java.math.BigDecimal;
@@ -13,7 +13,12 @@ import java.math.BigDecimal;
  */
 public class ExtractionByPanelHeading implements Extraction {
     @Override
-    public String doExtraction(Elements elements, String targetEnt) {
+    public ZtbDocument doExtraction(Elements elements, String targetEnt) {
+        String res = "暂无法识别";
+        String type = "暂未分类";
+        String keyContent = "";
+        // 默认识别率
+        double accuracyRate = 0.8;
         // 如果有目标信息块
         if(elements != null && elements.size()>0){
             // 用于存放抽取出的金额数据
@@ -29,14 +34,15 @@ public class ExtractionByPanelHeading implements Extraction {
                            String priceStr = arr[1].split("：")[1];
                            price = Extraction.handlePrice(priceStr,price,false);
                        } else {
-                           return "疑似未中标";
+                           return Extraction.handleResult(targetEnt, null, null, null, keyContent, type, accuracyRate, "疑似未中标");
                        }
                    }
                }
             }
-            return price.toString();
-        } else {
-            return "暂无法识别";
+            res = price.toString();
+            keyContent = elements.toString();
+            type = "panelHeading";
         }
+        return Extraction.handleResult(targetEnt, null, null, null, keyContent, type, accuracyRate, res);
     }
 }

@@ -1,5 +1,7 @@
 package xyz.ymtao.entity;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
@@ -9,10 +11,12 @@ import java.io.Serializable;
  * @Description:
  * @CreateDate: 2020/12/21  12:55
  */
+@ApiModel(value = "中标信息对象")
 public class ZtbDocument implements Serializable {
     private String entName;
     @Id
     private int id;
+    @ApiModelProperty(value = "招标公告标题")
     private String title;
     private String date;
     private String content;
@@ -24,14 +28,21 @@ public class ZtbDocument implements Serializable {
     /** 模板识别准确率*/
     private double accuracyRate;
     /** 提取的金额*/
+    @ApiModelProperty(value = "中标金额")
     private String amount;
+    // 是否已进行过汇总
+    private boolean summaryed = false;
+    // 历史汇总金额
+    private String summaryAmount;
 
     public ZtbDocument(String entName, String title, String date, String content) {
         this.entName = entName;
         this.title = title;
         this.date = date;
         this.content = content;
-        this.id = title.hashCode();
+        if(title != null){
+            this.id = title.hashCode();
+        }
     }
 
     public ZtbDocument(String entName, String title, String date, String content, String keyContent, String status, String type, double accuracyRate, String amount) {
@@ -44,10 +55,20 @@ public class ZtbDocument implements Serializable {
         this.type = type;
         this.accuracyRate = accuracyRate;
         this.amount = amount;
-        this.id = title.hashCode();
+        if(title != null){
+            this.id = title.hashCode();
+        }
     }
 
     public ZtbDocument() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getEntName() {
@@ -120,5 +141,21 @@ public class ZtbDocument implements Serializable {
 
     public void setAccuracyRate(double accuracyRate) {
         this.accuracyRate = accuracyRate;
+    }
+
+    public boolean getSummaryed() {
+        return summaryed;
+    }
+
+    public void setSummaryed(boolean summaryed) {
+        this.summaryed = summaryed;
+    }
+
+    public String getSummaryAmount() {
+        return summaryAmount;
+    }
+
+    public void setSummaryAmount(String summaryAmount) {
+        this.summaryAmount = summaryAmount;
     }
 }

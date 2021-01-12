@@ -40,11 +40,7 @@ public class Extraction4 {
 	private static final String DIR_PATH3="F:\\分类\\其它";
 
 	public static void main(String[] args) {
-		String[] types = {"暂无法识别"};
-		for(int i=0;i<types.length;i++){
-			mongoTemplate.insert(new TemplateType(types[i]));
-		}
-//		outPutDate(DIR_PATH);
+		outPutDate(DIR_PATH);
 	}
 
 	public static void outPutDate(String dirPath){

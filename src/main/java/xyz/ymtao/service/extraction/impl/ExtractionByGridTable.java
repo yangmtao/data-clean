@@ -1,7 +1,7 @@
 package xyz.ymtao.service.extraction.impl;
 
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import xyz.ymtao.entity.ZtbDocument;
 import xyz.ymtao.service.extraction.Extraction;
 
 import java.math.BigDecimal;
@@ -13,7 +13,12 @@ import java.math.BigDecimal;
  */
 public class ExtractionByGridTable implements Extraction {
     @Override
-    public String doExtraction(Elements elements, String targetEnt) {
+    public ZtbDocument doExtraction(Elements elements, String targetEnt) {
+        String res = "暂无法识别";
+        String type = "暂未分类";
+        String keyContent = "";
+        // 默认识别率
+        double accuracyRate = 0.8;
         if(elements != null && elements.size()>0){
             //存放解析后的金额
             BigDecimal price = new BigDecimal(0);
@@ -40,7 +45,7 @@ public class ExtractionByGridTable implements Extraction {
                     }
                 }
                 if(entNameIndex == -1 || priceIndex == -1){
-                    return "暂无法识别";
+                    return Extraction.handleResult(targetEnt, null, null, null, keyContent, type, accuracyRate, res);
                 }
 
                 //处理每一条中标信息info
@@ -53,10 +58,18 @@ public class ExtractionByGridTable implements Extraction {
                     }
                 }
             }
+            if(isHit){
+                res = price.toString();
+                type = "gridTable";
+                accuracyRate = 1;
+                keyContent = elements.toString();
+            } else {
+                res = "未中标";
+            }
 
-            return isHit ? price.toString() : "未中标";
+            return Extraction.handleResult(targetEnt, null, null, null, keyContent, type, accuracyRate, res);
         } else {
-            return "暂无法识别";
+            return Extraction.handleResult(targetEnt, null, null, null, keyContent, type, accuracyRate, res);
         }
     }
 }
