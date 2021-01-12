@@ -131,24 +131,34 @@ public class ZTBController {
         ZtbDocument ztbDoc = mongoTemplate.findOne(query, ZtbDocument.class, COLLECTION_NAME);
         Query sumQuery = new Query(Criteria.where("entName").is(ztbDoc.getEntName()));
         ZtbSummary ztbSummary = mongoTemplate.findOne(sumQuery,ZtbSummary.class,"ztbSummary");
-        BigDecimal total = new BigDecimal(ztbSummary.getAmount());
-        Update summaryUpdate = new Update();
-        // 如果进行过汇总
-        if(ztbDoc.getSummaryed()){
-          BigDecimal oldAmount = new BigDecimal(ztbDoc.getSummaryAmount());
-          total = total.subtract(oldAmount);
+        // 如果该企业的中标信息还未进行过汇总
+        if(ztbSummary == null){
+            ztbSummary = new ZtbSummary();
+            ztbSummary.setAmount(ztbDocument.getAmount());
+            ztbSummary.setEntName(ztbDoc.getEntName());
+            ztbSummary.setHitNum(1);
+            mongoTemplate.insert(ztbSummary);
         } else {
-            // 该条中标信息未进行过汇总,中标次数加1
-            Integer hitNum = ztbSummary.getHitNum();
-            hitNum++;
-            summaryUpdate.set("hitNum",hitNum);
+            BigDecimal total = new BigDecimal(ztbSummary.getAmount());
+            Update summaryUpdate = new Update();
+            // 如果该条中标信息进行过汇总
+            if(ztbDoc.getSummaryed()){
+                BigDecimal oldAmount = new BigDecimal(ztbDoc.getSummaryAmount());
+                total = total.subtract(oldAmount);
+            } else {
+                // 该条中标信息未进行过汇总,中标次数加1
+                Integer hitNum = ztbSummary.getHitNum();
+                hitNum++;
+                summaryUpdate.set("hitNum",hitNum);
+            }
+            total = total.add(new BigDecimal(ztbDocument.getAmount()));
+            summaryUpdate.set("amount",total.toString());
+            UpdateResult updateRes = mongoTemplate.updateFirst(sumQuery, summaryUpdate, ZtbSummary.class);
+            if(updateRes.getModifiedCount() <1){
+                return R.error("中标金额保存失败！");
+            }
         }
-        total = total.add(new BigDecimal(ztbDocument.getAmount()));
-        summaryUpdate.set("amount",total.toString());
-        UpdateResult updateRes = mongoTemplate.updateFirst(sumQuery, summaryUpdate, ZtbSummary.class);
-        if(updateRes.getModifiedCount() <1){
-            return R.error("中标金额保存失败！");
-        }
+
         // 再更新该条中标信息的金额
         Update update = new Update();
         update.set("amount",ztbDocument.getAmount());
