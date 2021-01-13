@@ -53,7 +53,7 @@ public class UploadController {
             String[] arr = line.split("#");
             if(arr != null && arr.length > 3){
                 line = isFooter(line);
-                line = line.replaceAll(arr[0],"<div style=\"background: yellow;\">" + arr[0] + "</div>");
+                line = line.replaceAll(arr[0],"<div style=\"font-weight:600;\">" + arr[0] + "</div>");
                 ZtbDocument document = new ZtbDocument(arr[0],arr[1],arr[2],line,phone);
                 try{
                     mongoTemplate.insert(document);

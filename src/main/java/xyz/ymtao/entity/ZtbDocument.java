@@ -23,6 +23,7 @@ public class ZtbDocument implements Serializable {
     private String keyContent;
     private String phone;
     /** 解析状态*/
+    @ApiModelProperty(value = "中标状态：中标，未中标")
     private String status;
     /** 模板类型*/
     private String type;

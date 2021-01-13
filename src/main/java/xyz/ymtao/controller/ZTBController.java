@@ -126,6 +126,9 @@ public class ZTBController {
     @ApiOperation(value = "保存中标金额")
     @PostMapping("/save/amount")
     public R saveAmount(@RequestBody  ZtbDocument ztbDocument){
+
+        // 是否中标
+        boolean isHit = "中标".equals(ztbDocument.getStatus());
         Query query = new Query();
         query.addCriteria(Criteria.where("title").is(ztbDocument.getTitle()));
 
@@ -134,7 +137,7 @@ public class ZTBController {
         Query sumQuery = new Query(Criteria.where("entName").is(ztbDoc.getEntName()));
         ZtbSummary ztbSummary = mongoTemplate.findOne(sumQuery,ZtbSummary.class,"ztbSummary");
         // 如果该企业的中标信息还未进行过汇总
-        if(ztbSummary == null){
+        if(ztbSummary == null && isHit){
             ztbSummary = new ZtbSummary();
             ztbSummary.setAmount(ztbDocument.getAmount());
             ztbSummary.setEntName(ztbDoc.getEntName());
@@ -143,17 +146,23 @@ public class ZTBController {
         } else {
             BigDecimal total = new BigDecimal(ztbSummary.getAmount());
             Update summaryUpdate = new Update();
-            // 如果该条中标信息进行过汇总
+            // 如果该条招标信息进行过汇总
             if(ztbDoc.getSummaryed()){
                 BigDecimal oldAmount = new BigDecimal(ztbDoc.getSummaryAmount());
+                // 减去旧金额
                 total = total.subtract(oldAmount);
             } else {
                 // 该条中标信息未进行过汇总,中标次数加1
-                Integer hitNum = ztbSummary.getHitNum();
-                hitNum++;
-                summaryUpdate.set("hitNum",hitNum);
+                if(isHit){
+                    Integer hitNum = ztbSummary.getHitNum();
+                    hitNum++;
+                    summaryUpdate.set("hitNum",hitNum);
+                }
             }
-            total = total.add(new BigDecimal(ztbDocument.getAmount()));
+            if(isHit){
+                total = total.add(new BigDecimal(ztbDocument.getAmount()));
+            }
+
             summaryUpdate.set("amount",total.toString());
             UpdateResult updateRes = mongoTemplate.updateFirst(sumQuery, summaryUpdate, ZtbSummary.class);
             if(updateRes.getModifiedCount() <1){
@@ -164,6 +173,9 @@ public class ZTBController {
         // 再更新该条中标信息的金额
         Update update = new Update();
         update.set("amount",ztbDocument.getAmount());
+        update.set("summaryAmount",ztbDocument.getAmount());
+        update.set("status",ztbDocument.getStatus());
+        update.set("summaryed",true);
         UpdateResult updateResult = mongoTemplate.updateFirst(query, update, ZtbDocument.class);
         if(updateResult.getModifiedCount() <1){
             return R.error("中标金额保存失败！");
