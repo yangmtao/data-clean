@@ -3,6 +3,7 @@ package xyz.ymtao.entity;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.springframework.data.annotation.Id;
+import xyz.ymtao.util.Const;
 
 import java.io.Serializable;
 
@@ -13,27 +14,31 @@ import java.io.Serializable;
  */
 @ApiModel(value = "中标信息对象")
 public class ZtbDocument implements Serializable {
+
+    @ApiModelProperty(value = "企业名称")
     private String entName;
     @Id
-    private int id;
+    private Integer id;
     @ApiModelProperty(value = "招标公告标题")
     private String title;
     private String date;
     private String content;
     private String keyContent;
+    @ApiModelProperty(value = "用户账号/手机号")
     private String phone;
     /** 解析状态*/
-    @ApiModelProperty(value = "中标状态：中标，未中标")
+    @ApiModelProperty(value = "中标状态：0暂无法识别，1中标，2中标无金额，3单价中标，4按比例提成，5未中标，6废标，7重复，8入围")
     private String status;
+    private Integer intStatus;
     /** 模板类型*/
     private String type;
     /** 模板识别准确率*/
-    private double accuracyRate;
+    private Double accuracyRate;
     /** 提取的金额*/
     @ApiModelProperty(value = "中标金额")
     private String amount;
     // 是否已进行过汇总
-    private boolean summaryed = false;
+    private Boolean summaryed;
     // 历史汇总金额
     private String summaryAmount;
 
@@ -63,6 +68,7 @@ public class ZtbDocument implements Serializable {
         this.content = content;
         this.keyContent = keyContent;
         this.status = status;
+        this.intStatus = transformStatus(status);
         this.type = type;
         this.accuracyRate = accuracyRate;
         this.amount = amount;
@@ -77,6 +83,7 @@ public class ZtbDocument implements Serializable {
         this.content = content;
         this.keyContent = keyContent;
         this.status = status;
+        this.intStatus = transformStatus(status);
         this.type = type;
         this.accuracyRate = accuracyRate;
         this.amount = amount;
@@ -87,11 +94,11 @@ public class ZtbDocument implements Serializable {
     public ZtbDocument() {
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -144,11 +151,31 @@ public class ZtbDocument implements Serializable {
     }
 
     public String getStatus() {
-        return status;
+        return this.status;
     }
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public Integer getIntStatus() {
+        return intStatus;
+    }
+
+    public void setIntStatus(Integer intStatus) {
+        this.intStatus = intStatus;
+    }
+
+    public boolean isSummaryed() {
+        return summaryed;
     }
 
     public String getType() {
@@ -167,7 +194,7 @@ public class ZtbDocument implements Serializable {
         this.accuracyRate = accuracyRate;
     }
 
-    public boolean getSummaryed() {
+    public Boolean getSummaryed() {
         return summaryed;
     }
 
@@ -181,5 +208,14 @@ public class ZtbDocument implements Serializable {
 
     public void setSummaryAmount(String summaryAmount) {
         this.summaryAmount = summaryAmount;
+    }
+
+    public static int transformStatus(String status){
+        for(int i = 0;i< Const.HITSTATUS.length;i++){
+            if(Const.HITSTATUS[i].equals(status)){
+                return i;
+            }
+        }
+        return 0;
     }
 }

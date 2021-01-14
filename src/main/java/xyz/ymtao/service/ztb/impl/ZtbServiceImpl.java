@@ -1,5 +1,6 @@
 package xyz.ymtao.service.ztb.impl;
 
+import com.mongodb.client.result.DeleteResult;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Font;
@@ -21,6 +22,7 @@ import xyz.ymtao.util.R;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +54,7 @@ public class ZtbServiceImpl implements ZtbService {
 
     @Override
     public <E> void exportToExcel(List<E> ztbList, String userId,HttpServletResponse response) {
-        if(ztbList != null && ztbList.size() > 1){
+        if(ztbList != null && ztbList.size() >= 1){
              this.exportToExcelByEntName(ztbList,response,ZtbDocument.class);
         } else {
             List<ZtbSummary> summaryList = mongoTemplate.find(new Query().addCriteria(Criteria.where("phone").is(userId)),ZtbSummary.class);
@@ -60,6 +62,29 @@ public class ZtbServiceImpl implements ZtbService {
 
         }
 
+    }
+
+    @Override
+    public long removeData(ZtbDocument ztbDocument) {
+        Class<? extends ZtbDocument> aClass = ztbDocument.getClass();
+        Field[] declaredFields = aClass.getDeclaredFields();
+        Query query =new Query();
+        for(int i=0;i<declaredFields.length;i++){
+            declaredFields[i].setAccessible(true);
+            try{
+                Object o = declaredFields[i].get(ztbDocument);
+                if(o != null){
+                    query.addCriteria(Criteria.where(declaredFields[i].getName()).is(o));
+                }
+            } catch (Exception e){
+                System.out.println("构造query失败，"  + declaredFields[i].getName());
+                return 0;
+            }
+
+        }
+        DeleteResult remove = mongoTemplate.remove(query, ZtbDocument.class);
+        System.out.println("用户" + ztbDocument.getPhone() + "删除数据：" + query);
+        return remove.getDeletedCount();
     }
 
     private <E> void exportToExcelByEntName(List<E> list, HttpServletResponse response, Class tClass){
@@ -121,18 +146,19 @@ public class ZtbServiceImpl implements ZtbService {
             row.createCell(k++).setCellValue(ztbList.size() > 0 ? ztbList.get(i).getTitle() : String.valueOf(summaryList.get(i).getHitNum()));
             row.createCell(k++).setCellValue(ztbList.size() > 0 ? ztbList.get(i).getAmount() : summaryList.get(i).getAmount());
             if(ztbList.size() > 0){
-                row.createCell(k).setCellValue(ztbList.get(i).getDate());
+                row.createCell(k++).setCellValue(ztbList.get(i).getDate());
+                row.createCell(k).setCellValue(ztbList.get(i).getStatus());
             }
         }
 
         // 将写好的excel导出到客户端
         String entName = ztbList.size() > 0 ? ztbList.get(0).getEntName() : "全部";
-
+        entName += "中标信息汇总";
         ServletOutputStream out;
         try{
             response.setContentType("application/ms-excel;charset=utf-8");
             response.setCharacterEncoding("utf-8");
-            response.setHeader("Content-disposition","attachment;filename="+entName.getBytes("gb2312")+"中标信息汇总.xls");
+            response.setHeader("Content-disposition","attachment;filename="+new String(entName.getBytes("gb2312"), "ISO-8859-1")+".xls");
             out = response.getOutputStream();
             wb.write(out);
             out.flush();
@@ -140,5 +166,13 @@ public class ZtbServiceImpl implements ZtbService {
         } catch (Exception e){
             System.out.println("导出失败！");
         }
+    }
+
+    public static void main(String[] args) {
+        ZtbService ztbService = new ZtbServiceImpl();
+        ZtbDocument ztbDocument = new ZtbDocument();
+        ztbDocument.setEntName("重庆华亚家私有限公司");
+        ztbDocument.setPhone("13883300323");
+        ztbService.removeData(ztbDocument);
     }
 }

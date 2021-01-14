@@ -52,9 +52,11 @@ public class UploadController {
         while((line=br.readLine()) != null){
             String[] arr = line.split("#");
             if(arr != null && arr.length > 3){
+                String content = arr[0] + arr[1] +arr[2];
+                line = line.substring(content.length() +3);
                 line = isFooter(line);
-                arr[3] = arr[3].replaceAll(arr[0],"<div style=\"font-weight:600;\">" + arr[0] + "</div>");
-                ZtbDocument document = new ZtbDocument(arr[0],arr[1],arr[2],arr[3],phone);
+                line = line.replaceAll(arr[0],"<div style=\"background:#bfbfbf;max-width:400px;font-weight:600;\">" + arr[0] + "</div>");
+                ZtbDocument document = new ZtbDocument(arr[0],arr[1],arr[2],line,phone);
                 try{
                     mongoTemplate.insert(document);
                 } catch (Exception e){

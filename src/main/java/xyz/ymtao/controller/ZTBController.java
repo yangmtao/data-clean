@@ -23,6 +23,7 @@ import xyz.ymtao.service.extraction.impl.ExtractionByGridTable;
 import xyz.ymtao.service.extraction.impl.ExtractionByPanelHeading;
 import xyz.ymtao.service.extraction.impl.ExtractionByVtTable;
 import xyz.ymtao.service.ztb.ZtbService;
+import xyz.ymtao.util.Const;
 import xyz.ymtao.util.R;
 
 import javax.servlet.http.HttpServletResponse;
@@ -126,9 +127,21 @@ public class ZTBController {
     @ApiOperation(value = "保存中标金额")
     @PostMapping("/save/amount")
     public R saveAmount(@RequestBody  ZtbDocument ztbDocument){
-
+        // 处理中标金额
+        int hitStatus = ZtbDocument.transformStatus(ztbDocument.getStatus());
+        String amount = ztbDocument.getAmount();
+        // 中标才处理金额，未中标或单价中标则不需要
+        if(hitStatus == 1){
+            amount = amount.replaceAll(",","");
+            amount = Extraction.getNumberFromString(amount);
+            if(ztbDocument.getAmount().contains("万")){
+                amount = new BigDecimal(amount).multiply(new BigDecimal(10000)).setScale(2).toString();
+            }
+            amount = new BigDecimal(amount).setScale(2).toString();
+            ztbDocument.setAmount(amount);
+        }
         // 是否中标
-        boolean isHit = "中标".equals(ztbDocument.getStatus());
+        boolean isHit = hitStatus > 0 && hitStatus <5;
         Query query = new Query();
         query.addCriteria(Criteria.where("title").is(ztbDocument.getTitle()));
 
@@ -139,15 +152,17 @@ public class ZTBController {
         // 如果该企业的中标信息还未进行过汇总
         if(ztbSummary == null && isHit){
             ztbSummary = new ZtbSummary();
-            ztbSummary.setAmount(ztbDocument.getAmount());
+            if(hitStatus == 1){
+                ztbSummary.setAmount(ztbDocument.getAmount());
+            }
             ztbSummary.setEntName(ztbDoc.getEntName());
             ztbSummary.setHitNum(1);
             mongoTemplate.insert(ztbSummary);
         } else {
-            BigDecimal total = new BigDecimal(ztbSummary.getAmount());
+            BigDecimal total = ztbSummary != null ? new BigDecimal(ztbSummary.getAmount()) : new BigDecimal(0);
             Update summaryUpdate = new Update();
             // 如果该条招标信息进行过汇总
-            if(ztbDoc.getSummaryed()){
+            if(ztbDoc.getSummaryed() != null && ztbDoc.getSummaryed()){
                 BigDecimal oldAmount = new BigDecimal(ztbDoc.getSummaryAmount());
                 // 减去旧金额
                 total = total.subtract(oldAmount);
@@ -159,13 +174,13 @@ public class ZTBController {
                     summaryUpdate.set("hitNum",hitNum);
                 }
             }
-            if(isHit){
+            if(hitStatus == 1){
                 total = total.add(new BigDecimal(ztbDocument.getAmount()));
             }
 
-            summaryUpdate.set("amount",total.toString());
+            summaryUpdate.set("amount",total.setScale(2).toString());
             UpdateResult updateRes = mongoTemplate.updateFirst(sumQuery, summaryUpdate, ZtbSummary.class);
-            if(updateRes.getModifiedCount() <1){
+            if(updateRes.getModifiedCount() <1 && !ztbDoc.getAmount().equals(ztbDoc.getAmount())){
                 return R.error("中标金额保存失败！");
             }
         }
@@ -177,11 +192,11 @@ public class ZTBController {
         update.set("status",ztbDocument.getStatus());
         update.set("summaryed",true);
         UpdateResult updateResult = mongoTemplate.updateFirst(query, update, ZtbDocument.class);
-        if(updateResult.getModifiedCount() <1){
+        if(updateResult.getModifiedCount() <1 && !ztbDoc.getAmount().equals(ztbDoc.getAmount()) ){
             return R.error("中标金额保存失败！");
         }
 
-        return R.ok("中标金额保存成功");
+        return R.ok("中标金额保存成功").put("amount",amount);
 
     }
 
@@ -202,5 +217,21 @@ public class ZTBController {
             }
         }
         ztbService.exportToExcel(ztbList,userId,response);
+    }
+
+    @ApiOperation(value = "删除招投标数据")
+    @PostMapping("/ztb/delete")
+    public R removeZtb(@RequestBody  ZtbDocument ztbDocument){
+        long res = ztbService.removeData(ztbDocument);
+        if(res == 0){
+            return R.error("没有匹配的数据删除");
+        }
+        return R.ok("删除成功").put("deleteCount",res);
+    }
+
+    @ApiOperation(value = "获取招投标有哪些中标状态")
+    @GetMapping("/ztb/status")
+    public R getHitStatus(){
+        return R.ok().put("status",Const.HITSTATUS);
     }
 }

@@ -34,6 +34,9 @@ public class ZtbSummary {
 
     public void setEntName(String entName) {
         this.entName = entName;
+        if(this.entName != null){
+            this.Id = entName.hashCode();
+        }
     }
 
     public int getHitNum() {

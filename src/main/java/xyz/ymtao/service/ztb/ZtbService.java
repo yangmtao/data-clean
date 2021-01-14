@@ -15,4 +15,6 @@ public interface ZtbService {
     public long updateZtb(ZtbDocument ztbDocument);
 
     public <T> void exportToExcel(List<T> list, String userId,HttpServletResponse response);
+
+    public long removeData(ZtbDocument ztbDocument);
 }
