@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.web.bind.annotation.*;
 import xyz.ymtao.entity.User;
+import xyz.ymtao.service.ztb.UserService;
 import xyz.ymtao.util.R;
 
 import java.util.List;
@@ -23,29 +24,31 @@ public class UserController {
 
     @Autowired
     MongoTemplate mongoTemplate;
+    @Autowired
+    UserService userService;
 
     @PostMapping("/register")
-    public String regUser(@RequestBody User user){
-        try {
-            mongoTemplate.insert(user);
-        }catch (Exception e){
-            return "error";
+    public R regUser(@RequestBody User user){
+        if(user.getPhone() == null || user.getPhone() == ""){
+            return R.error("电话号码为空！");
         }
-        return "ok";
+        if(user.getPassword() == null || user.getPassword() == ""){
+            return R.error("密码为空！");
+        }
+        userService.add(user);
+        return R.ok();
     }
-    @GetMapping("/login")
-    public R loginUser(@RequestParam String phone){
-        Query query = new Query();
-        if(phone == null || phone == ""){
-            return R.error();
+    @PostMapping("/login")
+    public R loginUser(@RequestBody User user){
+
+        if(user.getPhone() == null || user.getPhone() == ""){
+            return R.error("电话号码为空！");
         }
-        List<User> users = null;
-        query.addCriteria(Criteria.where("phone").is(phone));
-        try {
-            users = mongoTemplate.find(query, User.class);
-        }catch (Exception e){
-            return R.error();
+        if(user.getPassword() == null || user.getPassword() == ""){
+            return R.error("密码为空！");
         }
-        return R.ok().put("data",users);
+
+        User userInfo = userService.login(user);
+        return R.ok().put("data",userInfo);
     }
 }
